@@ -5,9 +5,10 @@
 
 var express = require('express');
 var routes = require('./routes');
-var user = require('./routes/user');
+var bitstamp_api = require('./routes/bitstamp_api.js');
 var http = require('http');
 var path = require('path');
+var browserify = require('browserify-middleware');
 
 var app = express();
 
@@ -41,7 +42,7 @@ app.get('/js/app.js', browserify('./public/js/app/main.js', { minify: false, cac
 
 /// ROUTES
 app.get('/', routes.index);
-app.get('/users', user.list);
+bitstamp_api.register(app);
 
 http.createServer(app).listen(app.get('port'), function(){
   console.log('Express server listening on port ' + app.get('port'));

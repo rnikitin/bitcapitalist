@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html ng-app="bitcapitalistApp">
+<head>
+    <title>BitCapitalist - your earn calculator.</title>
+
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.0.3/css/bootstrap.min.css">
+    <link rel="stylesheet" href="/styles/nprogress.css">
+    <link rel="stylesheet" href="/styles/style.css">
+</head>
+<body>
+
+<div class="container" ng-controller="MainController">
+
+    <!-- Static navbar -->
+    <div class="navbar navbar-default" role="navigation">
+        <div class="navbar-header">
+            <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                <span class="sr-only">Toggle navigation</span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="navbar-brand" href="#">BitCapitalist</a>
+        </div>
+        <div class="navbar-collapse collapse">
+            <ul class="nav navbar-nav">
+                <li class="active"><a href="#">Bitstamp</a></li>
+            </ul>
+            <ul class="nav navbar-nav navbar-right">
+                <li>
+                    <button type="button" ng-click="terminate_session();" class="btn btn-primary navbar-btn">Terminate
+                        Session
+                    </button>
+                </li>
+            </ul>
+        </div>
+        <!--/.nav-collapse -->
+    </div>
+
+    <!-- Main component for a primary marketing message or call to action -->
+    <div class="jumbotron" ng-show="!is_authenticated">
+        <h1>BitCapitalist</h1>
+
+        <p>This is open-source software which trying to help you to manage your Bitcoin investement portfolio.</p>
+
+        <p>If this software helped you a lot, you always can donate some tips at <strong>1D8A2rsnpTymhNLkFD5pXkqaMPcdvYcjNn</strong>
+        </p>
+
+        <p><a class="btn btn-primary btn-lg" id="btn-start" role="button">Start using</a></p>
+    </div>
+
+    <div class="modal fade" id="modal-auth" ng-controller="AuthController">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal">&times;</button>
+                    <h4 class="modal-title">Authentication</h4>
+                </div>
+                <div class="modal-body">
+                    <form class="form-horizontal" role="form">
+                        <div class="alert alert-danger" ng-show="err">
+                            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                            {{err}}
+                        </div>
+                        <div class="form-group">
+                            <label for="inputClientId" class="col-sm-4 control-label">Bitstamp Client Id</label>
+
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" ng-model="client_id" id="inputClientId"
+                                       placeholder="Bitstamp Client Id">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="inputClientId" class="col-sm-4 control-label">Bitstamp API Key</label>
+
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" ng-model="api_key" id="inputKey"
+                                       placeholder="Bitstamp API Key">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="inputClientId" class="col-sm-4 control-label">Bitstamp API Secret</label>
+
+                            <div class="col-sm-8">
+                                <input type="text" class="form-control" ng-model="api_secret" id="inputSecret"
+                                       placeholder="Bitstamp API Secret">
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" ng-click="authenticate_clicked();">Authenticate
+                    </button>
+                </div>
+            </div>
+            <!-- /.modal-content -->
+        </div>
+        <!-- /.modal-dialog -->
+    </div>
+
+    <div class="bitstamp-view" ng-show="is_authenticated" ng-controller="BitstampStatsController">
+
+        <div class="row">
+            <div class="col-xs-4">
+                <div class="input-group">
+                <span class="input-group-btn lbl-price">
+                    Bitcoin Price:
+                </span>
+                    <input type="text" class="form-control" ng-model="price_value" ng-readonly="!custom_price_enabled"/>
+                <span class="input-group-btn" ng-show="!custom_price_enabled">
+                    <button class="btn btn-default" ng-click="update_price();">Refresh</button>
+                </span>
+                </div>
+            </div>
+            <div class="col-xs-3" ng-show="!custom_price_enabled"><span
+                    class="row-label">Updated {{ updated_ago() }}</span></div>
+
+            <div class="col-xs-3 checkbox">
+                <label>
+                    <input type="checkbox" ng-model="custom_price_enabled">
+                    Set custom price
+                </label>
+            </div>
+        </div>
+        <div class="row">
+            <div class="orders-title">
+                <h3 class="inline-block">Orders</h3> <span class="orders-updated">Updated {{ last_update() }}</span>
+                <button class="btn btn-default pull-right" ng-click="update_transactions();">Refresh</button>
+            </div>
+            <table class="table">
+                <tr>
+                    <th>#</th>
+                    <th>Date</th>
+                    <th>USD</th>
+                    <th>Fee</th>
+                    <th>Buy Price</th>
+                    <th>BTC Amount</th>
+                    <th>Profit</th>
+                </tr>
+                <tr ng-repeat="t in orders()" ng-class="{ positive: transaction_profit(t) > 0, negative: transaction_profit(t) < 0 }">
+                    <td>{{$index + 1}}</td>
+                    <td>{{t.datetime}}</td>
+                    <td>{{t.usd}}</td>
+                    <td>{{t.fee}}</td>
+                    <td>{{t.btc_usd}}</td>
+                    <td>{{t.btc}}</td>
+                    <td>{{ transaction_profit(t).toFixed(4) }}</td>
+                </tr>
+                <tr class="total">
+                    <th>&nbsp;</th>
+                    <th>&nbsp;</th>
+                    <th>{{ total_usd().toFixed(4) }}</th>
+                    <th>{{ total_fee().toFixed(4) }}</th>
+                    <th>&nbsp;</th>
+                    <th>{{ total_btc().toFixed(4) }}</th>
+                    <th>{{ total_profit().toFixed(4) }}</th>
+                </tr>
+            </table>
+        </div>
+    </div>
+</div>
+
+</div>
+<!-- /container -->
+
+<!-- load js -->
+<script type="text/javascript" src="http://code.jquery.com/jquery-2.0.3.min.js"></script>
+<script src="//netdna.bootstrapcdn.com/bootstrap/3.0.3/js/bootstrap.min.js"></script>
+<script type="text/javascript" src="/js/vendor/angular.min.js"></script>
+<script type="text/javascript" src="/js/vendor/store.min.js"></script>
+<script type="text/javascript" src="/js/vendor/nprogress.js"></script>
+<script type="text/javascript" src="/js/vendor/lodash.min.js"></script>
+<script type="text/javascript" src="/js/app.js"></script>
+</body>
+</html>
